@@ -15,17 +15,9 @@ class ODENVPAdapted(odenvp.ODENVP):
         alpha=0.05,
         cnf_kwargs=None,
     ):
-        print(n_scale)
-        super(odenvp.ODENVP, self).__init__(
-            input_size,
-            n_scale=n_scale,
-            n_blocks=n_blocks,
-            intermediate_dims=intermediate_dims,
-            nonlinearity=nonlinearity,
-            squash_input=squash_input,
-            alpha=alpha,
-            cnf_kwargs=cnf_kwargs,
-        )
+        super().__init__(input_size, n_scale=n_scale, n_blocks=n_blocks, intermediate_dims=intermediate_dims,
+                         nonlinearity=nonlinearity, squash_input=squash_input, alpha=alpha, cnf_kwargs=cnf_kwargs)
+        self.input_size = input_size
         self.encoder = nn.Sequential(
             nn.Linear(np.prod(input_size[1:]), 1024),
             nn.LeakyReLU(),
@@ -55,13 +47,25 @@ class ODENVPAdapted(odenvp.ODENVP):
             nn.Sigmoid()
         )
 
-    def forward(self, x):
-        z = super().forward(x)
-        z = self.encoder(z)
-        return z
+    def forward(self, x, logpx=None, reverse=False):
+        if not reverse:
+            z, logpz = super().forward(x, logpx=logpx, reverse=reverse)
+            z = self.encoder(z)
+            return z, logpz
+        else:
+            z = self.decoder(x)
+            z = z.reshape(self.input_size)
+            print("Reverse reshape", z.shape)
+            return super().forward(z, logpx=logpx, reverse=reverse)
 
 
-class ODENVPAdapted(odenvp.ODENVP):
-    def __init__(self, input_size, n_scale, n_blocks, intermediate_dims, nonlinearity, squash_input, alpha, cnf_kwargs):
+class ODETest(odenvp.ODENVP):
+    def __init__(self, input_size, n_scale=float('inf'),
+                 n_blocks=2,
+                 intermediate_dims=(32,),
+                 nonlinearity="softplus",
+                 squash_input=True,
+                 alpha=0.05,
+                 cnf_kwargs=None,):
         super().__init__(input_size, n_scale=n_scale, n_blocks=n_blocks, intermediate_dims=intermediate_dims,
                          nonlinearity=nonlinearity, squash_input=squash_input, alpha=alpha, cnf_kwargs=cnf_kwargs)
