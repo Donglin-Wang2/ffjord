@@ -49,13 +49,16 @@ class ODENVPAdapted(odenvp.ODENVP):
 
     def forward(self, x, logpx=None, reverse=False):
         if not reverse:
-            z, logpz = super().forward(x, logpx=logpx, reverse=reverse)
+            logpz = None
+            if logpx != None:
+                z, logpz = super().forward(x, logpx=logpx, reverse=reverse)
+            else:
+                z = super().forward(x, logpx=logpx, reverse=reverse)
             z = self.encoder(z)
-            return z, logpz
+            return z if logpx == None else z, logpz
         else:
             z = self.decoder(x)
             z = z.reshape(self.input_size)
-            print("Reverse reshape", z.shape)
             return super().forward(z, logpx=logpx, reverse=reverse)
 
 
