@@ -116,7 +116,7 @@ class ODENVP(nn.Module):
             out.append(factor_out)
         out = [o.view(o.size()[0], -1) for o in out]
         out = torch.cat(out, 1)
-        return out if logpx is None else (out, _logpx)
+        return out, _logpx
 
     def _generate(self, z, logpz=None):
         z = z.view(z.shape[0], -1)
@@ -132,7 +132,7 @@ class ODENVP(nn.Module):
         for idx in range(len(self.transforms) - 2, -1, -1):
             z_prev = torch.cat((z_prev, zs[idx]), dim=1)
             z_prev, _logpz = self.transforms[idx](z_prev, _logpz, reverse=True)
-        return z_prev if logpz is None else (z_prev, _logpz)
+        return z_prev, _logpz
 
 
 class StackedCNFLayers(layers.SequentialFlow):
